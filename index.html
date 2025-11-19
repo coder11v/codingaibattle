@@ -7,17 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Custom Scrollbar for the grid items if needed */
-        iframe::-webkit-scrollbar {
-            width: 8px;
-        }
-        iframe::-webkit-scrollbar-track {
-            background: #1f2937;
-        }
-        iframe::-webkit-scrollbar-thumb {
-            background: #4b5563;
-            border-radius: 4px;
-        }
+        /* Custom Scrollbar */
+        iframe::-webkit-scrollbar { width: 8px; }
+        iframe::-webkit-scrollbar-track { background: #1f2937; }
+        iframe::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
         
         .glass-panel {
             background: rgba(17, 24, 39, 0.7);
@@ -26,136 +19,304 @@
         }
 
         /* Loader Animation */
-        .loader-ring {
-            display: inline-block;
-            position: relative;
-            width: 80px;
-            height: 80px;
-        }
-        .loader-ring div {
-            box-sizing: border-box;
-            display: block;
-            position: absolute;
-            width: 64px;
-            height: 64px;
-            margin: 8px;
-            border: 4px solid #3b82f6;
-            border-radius: 50%;
-            animation: loader-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-            border-color: #3b82f6 transparent transparent transparent;
-        }
+        .loader-ring { display: inline-block; position: relative; width: 80px; height: 80px; }
+        .loader-ring div { box-sizing: border-box; display: block; position: absolute; width: 64px; height: 64px; margin: 8px; border: 4px solid #3b82f6; border-radius: 50%; animation: loader-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite; border-color: #3b82f6 transparent transparent transparent; }
         .loader-ring div:nth-child(1) { animation-delay: -0.45s; }
         .loader-ring div:nth-child(2) { animation-delay: -0.3s; }
         .loader-ring div:nth-child(3) { animation-delay: -0.15s; }
-        @keyframes loader-ring {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes loader-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* CARD ANIMATION STYLES */
+        .ai-card {
+            transform-origin: center center;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        /* The button that appears on hover */
+        .fullscreen-trigger {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .ai-card:hover .fullscreen-trigger {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* When in fullscreen mode */
+        .is-fullscreen {
+            z-index: 9999 !important;
+            border-radius: 0 !important;
+            border: none !important;
+        }
+
+        /* Hide other elements when one is fullscreen */
+        body.has-fullscreen-active header {
+            opacity: 0;
+            pointer-events: none;
         }
     </style>
 </head>
 <body class="bg-gray-900 text-white h-screen w-screen flex flex-col overflow-hidden font-sans selection:bg-blue-500 selection:text-white">
 
-    <!-- HEADER: Prompt Display -->
-    <header class="glass-panel border-b border-gray-700 flex-none z-50 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+    <div id="info-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-500">
+        <div id="info-modal-card" class="bg-gray-800 border border-gray-600 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-500 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
             
-            <!-- Title / Brand -->
+            <div class="text-center space-y-4">
+                <div class="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center mx-auto text-blue-400">
+                    <i class="fa-solid fa-circle-info text-xl"></i>
+                </div>
+                
+                <h3 class="text-xl font-bold text-white tracking-wide">Notice</h3>
+                
+                <div class="text-gray-300 text-sm leading-relaxed space-y-2">
+                    <p>
+                        I do not own any of the AI models displayed in this interface. They are proprietary technologies of their respective owners.
+                    </p>
+                    <p class="text-gray-400 text-xs border-t border-gray-700 pt-2 mt-2">
+                        Generated: <span class="text-blue-300 font-mono">November 19th</span>
+                    </p>
+                </div>
+
+                <div class="pt-4">
+                    <button onclick="closeModal()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow-lg shadow-blue-900/20">
+                        Understood
+                    </button>
+                    <p class="mt-4 text-xs text-gray-500 font-mono">Developed by Veer Bajaj</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header class="glass-panel border-b border-gray-700 flex-none z-50 shadow-lg transition-opacity duration-500">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
             <div class="flex items-center gap-2 text-gray-400 text-sm font-bold uppercase tracking-wider min-w-fit hidden md:flex">
                 <i class="fa-solid fa-layer-group text-blue-500"></i>
-                <span>Context Window - Comparing Generative AI</span>
+                <span>Context Window</span>
             </div>
 
-            <!-- The Prompt Box -->
             <div class="flex-1 relative group">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <i class="fa-solid fa-terminal text-gray-500 text-xs"></i>
                 </div>
-                <div class="block w-full bg-gray-800 border border-gray-700 rounded-md py-2 pl-10 pr-4 text-sm text-green-400 font-mono shadow-inner focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
+                <div class="block w-full bg-gray-800 border border-gray-700 rounded-md py-2 pl-10 pr-4 text-sm text-green-400 font-mono shadow-inner">
                     "Create me a website (game of flappy bird but like modern sleek)"
                 </div>
-                <!-- Tooltip/Badge -->
                 <div class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-700 text-xs text-gray-300 px-2 py-0.5 rounded border border-gray-600">
                     System Prompt
                 </div>
             </div>
 
-            <!-- Controls -->
             <div class="flex items-center gap-3 min-w-fit">
                 <button class="text-gray-400 hover:text-white transition-colors"><i class="fa-solid fa-columns"></i></button>
-                <button class="text-gray-400 hover:text-white transition-colors"><i class="fa-solid fa-expand"></i></button>
             </div>
         </div>
     </header>
 
-    <!-- LOADING OVERLAY -->
     <div id="loader-overlay" class="flex-1 flex flex-col items-center justify-center bg-gray-900 z-40 absolute inset-0 top-[60px]">
         <div class="loader-ring"><div></div><div></div><div></div><div></div></div>
         <h2 class="mt-6 text-blue-400 font-mono tracking-widest text-sm animate-pulse">INITIALIZING CONTEXT WINDOW...</h2>
-        <div class="mt-2 text-gray-600 text-xs font-mono">Context Window is a AI comparison site</div>
     </div>
 
-    <!-- MAIN GRID (Initially Hidden) -->
-    <main id="main-grid" class="flex-1 grid grid-cols-1 md:grid-cols-2 grid-rows-2 gap-1 p-1 bg-gray-800 hidden opacity-0 transition-opacity duration-500">
+    <main id="main-grid" class="flex-1 grid grid-cols-1 md:grid-cols-2 grid-rows-2 gap-1 p-1 bg-gray-800 hidden opacity-0 transition-opacity duration-500 relative">
 
-        <!-- CELL 1: GEMINI -->
-        <div class="relative group border border-gray-700 bg-white overflow-hidden rounded-tl-lg">
-            <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-gray-900/80 backdrop-blur-md border border-blue-500/30 text-white px-3 py-1.5 rounded-full shadow-lg transition-opacity duration-300 group-hover:opacity-20">
-                <div class="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 animate-pulse"></div>
-                <span class="text-xs font-semibold tracking-wide">gemini-3-pro</span>
+        <div id="card-gemini" class="ai-card relative group border border-gray-700 bg-white overflow-hidden rounded-tl-lg bg-gray-900">
+            <div class="absolute top-3 left-3 right-3 z-20 flex justify-between items-start pointer-events-none">
+                <div class="flex items-center gap-2 bg-gray-900/90 backdrop-blur-md border border-blue-500/30 text-white px-3 py-1.5 rounded-full shadow-lg">
+                    <div class="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 animate-pulse"></div>
+                    <span class="text-xs font-semibold tracking-wide">gemini-3-pro</span>
+                </div>
+                <button onclick="toggleFullscreen('card-gemini')" class="fullscreen-trigger pointer-events-auto bg-gray-800/80 hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center border border-gray-600 hover:border-blue-400 backdrop-blur shadow-lg cursor-pointer">
+                    <i class="fa-solid fa-expand text-xs"></i>
+                </button>
             </div>
-            <iframe class="w-full h-full" src="/gemini" allow="microphone; clipboard-read; clipboard-write"></iframe>
+            <iframe class="w-full h-full bg-white" src="/gemini"></iframe>
         </div>
 
-        <!-- CELL 2: GPT -->
-        <div class="relative group border border-gray-700 bg-white overflow-hidden rounded-tr-lg md:rounded-tr-lg">
-            <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-gray-900/80 backdrop-blur-md border border-teal-500/30 text-white px-3 py-1.5 rounded-full shadow-lg transition-opacity duration-300 group-hover:opacity-20">
-                <div class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></div>
-                <span class="text-xs font-semibold tracking-wide">gpt-5.1-high</span>
+        <div id="card-gpt" class="ai-card relative group border border-gray-700 bg-white overflow-hidden rounded-tr-lg md:rounded-tr-lg bg-gray-900">
+            <div class="absolute top-3 left-3 right-3 z-20 flex justify-between items-start pointer-events-none">
+                <div class="flex items-center gap-2 bg-gray-900/90 backdrop-blur-md border border-teal-500/30 text-white px-3 py-1.5 rounded-full shadow-lg">
+                    <div class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></div>
+                    <span class="text-xs font-semibold tracking-wide">gpt-5.1-high</span>
+                </div>
+                <button onclick="toggleFullscreen('card-gpt')" class="fullscreen-trigger pointer-events-auto bg-gray-800/80 hover:bg-teal-600 text-white w-8 h-8 rounded-full flex items-center justify-center border border-gray-600 hover:border-teal-400 backdrop-blur shadow-lg cursor-pointer">
+                    <i class="fa-solid fa-expand text-xs"></i>
+                </button>
             </div>
-            <iframe class="w-full h-full" src="/gpt" allow="microphone; clipboard-read; clipboard-write"></iframe>
+            <iframe class="w-full h-full bg-white" src="/gpt"></iframe>
         </div>
 
-        <!-- CELL 3: CLAUDE -->
-        <div class="relative group border border-gray-700 bg-white overflow-hidden rounded-bl-lg md:rounded-bl-lg">
-            <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-gray-900/80 backdrop-blur-md border border-orange-500/30 text-white px-3 py-1.5 rounded-full shadow-lg transition-opacity duration-300 group-hover:opacity-20">
-                <div class="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></div>
-                <span class="text-xs font-semibold tracking-wide">claude-opus-4-1-20250805</span>
+        <div id="card-claude" class="ai-card relative group border border-gray-700 bg-white overflow-hidden rounded-bl-lg md:rounded-bl-lg bg-gray-900">
+            <div class="absolute top-3 left-3 right-3 z-20 flex justify-between items-start pointer-events-none">
+                <div class="flex items-center gap-2 bg-gray-900/90 backdrop-blur-md border border-orange-500/30 text-white px-3 py-1.5 rounded-full shadow-lg">
+                    <div class="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></div>
+                    <span class="text-xs font-semibold tracking-wide">claude-opus</span>
+                </div>
+                <button onclick="toggleFullscreen('card-claude')" class="fullscreen-trigger pointer-events-auto bg-gray-800/80 hover:bg-orange-600 text-white w-8 h-8 rounded-full flex items-center justify-center border border-gray-600 hover:border-orange-400 backdrop-blur shadow-lg cursor-pointer">
+                    <i class="fa-solid fa-expand text-xs"></i>
+                </button>
             </div>
-            <iframe class="w-full h-full" src="/claude" allow="microphone; clipboard-read; clipboard-write"></iframe>
+            <iframe class="w-full h-full bg-white" src="/claude"></iframe>
         </div>
 
-        <!-- CELL 4: GROK -->
-        <div class="relative group border border-gray-700 bg-white overflow-hidden rounded-br-lg">
-            <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-gray-900/80 backdrop-blur-md border border-gray-400/30 text-white px-3 py-1.5 rounded-full shadow-lg transition-opacity duration-300 group-hover:opacity-20">
-                <div class="w-2 h-2 rounded-full bg-gray-100 animate-pulse"></div>
-                <span class="text-xs font-semibold tracking-wide">grok-4.1-thinking</span>
+        <div id="card-grok" class="ai-card relative group border border-gray-700 bg-white overflow-hidden rounded-br-lg bg-gray-900">
+            <div class="absolute top-3 left-3 right-3 z-20 flex justify-between items-start pointer-events-none">
+                <div class="flex items-center gap-2 bg-gray-900/90 backdrop-blur-md border border-gray-400/30 text-white px-3 py-1.5 rounded-full shadow-lg">
+                    <div class="w-2 h-2 rounded-full bg-gray-100 animate-pulse"></div>
+                    <span class="text-xs font-semibold tracking-wide">grok-4.1</span>
+                </div>
+                <button onclick="toggleFullscreen('card-grok')" class="fullscreen-trigger pointer-events-auto bg-gray-800/80 hover:bg-gray-600 text-white w-8 h-8 rounded-full flex items-center justify-center border border-gray-600 hover:border-gray-400 backdrop-blur shadow-lg cursor-pointer">
+                    <i class="fa-solid fa-expand text-xs"></i>
+                </button>
             </div>
-            <iframe class="w-full h-full" src="/grok" allow="microphone; clipboard-read; clipboard-write"></iframe>
+            <iframe class="w-full h-full bg-white" src="/grok"></iframe>
         </div>
 
     </main>
 
     <script>
-        // Simulating the load delay
+        // --- MODAL LOGIC ---
+        function closeModal() {
+            const modal = document.getElementById('info-modal');
+            const modalContent = document.getElementById('info-modal-card');
+            
+            modal.style.opacity = '0';
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 500);
+        }
+
+        function showModal() {
+            const modal = document.getElementById('info-modal');
+            const modalContent = document.getElementById('info-modal-card');
+            
+            modal.classList.remove('pointer-events-none');
+            modal.style.opacity = '1';
+            
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+        }
+
+        // --- 1. LOADING SEQUENCE ---
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const loader = document.getElementById('loader-overlay');
                 const grid = document.getElementById('main-grid');
-
-                // Fade out loader
                 loader.style.opacity = '0';
-                loader.style.transition = 'opacity 01s ease';
+                loader.style.transition = 'opacity 0.8s ease';
                 
                 setTimeout(() => {
                     loader.style.display = 'none';
                     grid.classList.remove('hidden');
-                    // Small timeout to ensure display:block applies before opacity transition
-                    requestAnimationFrame(() => {
-                        grid.style.opacity = '1';
-                    });
+                    requestAnimationFrame(() => { grid.style.opacity = '1'; });
+                    
+                    // TRIGGER POPUP HERE (After grid appears)
+                    setTimeout(() => {
+                        showModal();
+                    }, 600);
+                    
                 }, 300);
+            }, 1000);
+        });
 
-            }, 1000); // 1 second delay
+        // --- 2. FLUID FULLSCREEN ANIMATION LOGIC ---
+        // We use explicit style manipulation for the transition because
+        // transitioning from Grid (static) to Fixed requires calculating coordinates.
+        
+        let activeCardId = null;
+        let originalRect = null; // Stores the position to return to
+
+        function toggleFullscreen(cardId) {
+            const card = document.getElementById(cardId);
+            const btnIcon = card.querySelector('.fullscreen-trigger i');
+            const isExpanding = !card.classList.contains('is-fullscreen');
+
+            if (isExpanding) {
+                // --- EXPANDING ---
+                
+                // 1. Prevent multiple cards from expanding
+                if (activeCardId && activeCardId !== cardId) return; 
+                activeCardId = cardId;
+
+                // 2. Get current coordinates (where the card is in the grid)
+                const rect = card.getBoundingClientRect();
+                originalRect = rect; // Save for later
+
+                // 3. Set initial fixed styles to MATCH the grid position exactly
+                // This prevents the visual "snap"
+                card.style.position = 'fixed';
+                card.style.top = rect.top + 'px';
+                card.style.left = rect.left + 'px';
+                card.style.width = rect.width + 'px';
+                card.style.height = rect.height + 'px';
+                card.style.zIndex = '50';
+                card.style.margin = '0';
+                
+                // 4. Add transition class for smooth animation
+                // We add this AFTER setting the initial fixed position
+                requestAnimationFrame(() => {
+                    card.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)'; // "Spring-like" ease
+                    
+                    // 5. Set target styles (Full screen)
+                    requestAnimationFrame(() => {
+                        card.classList.add('is-fullscreen');
+                        document.body.classList.add('has-fullscreen-active');
+                        
+                        card.style.top = '0';
+                        card.style.left = '0';
+                        card.style.width = '100vw';
+                        card.style.height = '100vh';
+                        
+                        // Change Icon
+                        btnIcon.classList.remove('fa-expand');
+                        btnIcon.classList.add('fa-compress');
+                    });
+                });
+
+            } else {
+                // --- COLLAPSING ---
+                
+                // 1. Target styles: Go back to the saved coordinates
+                card.style.top = originalRect.top + 'px';
+                card.style.left = originalRect.left + 'px';
+                card.style.width = originalRect.width + 'px';
+                card.style.height = originalRect.height + 'px';
+                
+                card.classList.remove('is-fullscreen');
+                document.body.classList.remove('has-fullscreen-active');
+
+                // Change Icon back
+                btnIcon.classList.remove('fa-compress');
+                btnIcon.classList.add('fa-expand');
+
+                // 2. Wait for transition to finish, then clean up styles
+                // so it snaps back into the CSS Grid flow naturally
+                setTimeout(() => {
+                    card.style.position = '';
+                    card.style.top = '';
+                    card.style.left = '';
+                    card.style.width = '';
+                    card.style.height = '';
+                    card.style.zIndex = '';
+                    card.style.transition = ''; // Remove inline transition so CSS takes over
+                    activeCardId = null;
+                }, 500); // Match transition duration
+            }
+        }
+
+        // Listen for ESC key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (activeCardId) toggleFullscreen(activeCardId);
+                // Also close modal if open
+                const modal = document.getElementById('info-modal');
+                if (modal.style.opacity === '1') closeModal();
+            }
         });
     </script>
 </body>
