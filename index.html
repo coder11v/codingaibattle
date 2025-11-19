@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Model Comparison Arena</title>
+    <title>Context Window - Comparing Generative AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -62,7 +62,7 @@
             <!-- Title / Brand -->
             <div class="flex items-center gap-2 text-gray-400 text-sm font-bold uppercase tracking-wider min-w-fit hidden md:flex">
                 <i class="fa-solid fa-layer-group text-blue-500"></i>
-                <span>Model Arena</span>
+                <span>Context Window - Comparing Generative AI</span>
             </div>
 
             <!-- The Prompt Box -->
@@ -90,8 +90,8 @@
     <!-- LOADING OVERLAY -->
     <div id="loader-overlay" class="flex-1 flex flex-col items-center justify-center bg-gray-900 z-40 absolute inset-0 top-[60px]">
         <div class="loader-ring"><div></div><div></div><div></div><div></div></div>
-        <h2 class="mt-6 text-blue-400 font-mono tracking-widest text-sm animate-pulse">INITIALIZING NEURAL LINK...</h2>
-        <div class="mt-2 text-gray-600 text-xs font-mono">Connecting to model endpoints</div>
+        <h2 class="mt-6 text-blue-400 font-mono tracking-widest text-sm animate-pulse">INITIALIZING CONTEXT WINDOW...</h2>
+        <div class="mt-2 text-gray-600 text-xs font-mono">Context Window is a AI comparison site</div>
     </div>
 
     <!-- MAIN GRID (Initially Hidden) -->
@@ -144,7 +144,7 @@
 
                 // Fade out loader
                 loader.style.opacity = '0';
-                loader.style.transition = 'opacity 0.3s ease';
+                loader.style.transition = 'opacity 01s ease';
                 
                 setTimeout(() => {
                     loader.style.display = 'none';
